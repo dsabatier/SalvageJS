@@ -37,7 +37,7 @@ export class PlayerShip extends Phaser.Physics.Arcade.Sprite
         position.y += direction.y * 30;
 
         this.scene.addBullet(position, direction);//new Bullet({scene: this.scene, position: {x: position.x + (direction.x * 10), y: position.y + (direction.y * 10)}, image: 'bullet', direction, speed: 380});
-        this.scene.laserSound.play({volume: 0.3});
+        this.scene.laserSound.play({volume: 0.5});
     }
 
     setPlayerControlsEnabled(enabled)

@@ -44,7 +44,7 @@ export class Comet extends Phaser.Physics.Arcade.Sprite
             const group = this.type === "comet" ? this.scene.cometGroup : this.scene.debrisGroup;
             group.killAndHide(this);
 
-            this.scene.explosionSound.play({volume: 0.6});
+            this.scene.explosionSound.play({volume: 0.4});
 
             if(this.type !== "comet")
             {

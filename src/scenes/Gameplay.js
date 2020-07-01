@@ -78,7 +78,7 @@ export class Gameplay extends Phaser.Scene
         });
 
         if(!this.bgm.isPlaying)
-            this.bgm.play({loop: true, volume: 0.3});
+            this.bgm.play({loop: true, volume: 0.4});
         
     }
 
@@ -248,9 +248,9 @@ export class Gameplay extends Phaser.Scene
 
         this.load.audio('explosionSfx', require('../assets/Explosion.ogg'));
         this.load.audio('hitSfx', require('../assets/Hit_Hurt.ogg'));
-        this.load.audio('laserSfx', require('../assets/Laser_Shoot4.mp3'));
+        this.load.audio('laserSfx', require('../assets/Laser_Shoot10.mp3'));
         this.load.audio('pickupSfx', require('../assets/Pickup_Coin.ogg'));
-        this.load.audio('bgm', require('../assets/bgm.mp3'));
+        this.load.audio('bgm', require('../assets/bgm-mix3.mp3'));
 
         this.load.image('starsBackground', starBackgroundImage);
 
