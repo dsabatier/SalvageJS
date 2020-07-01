@@ -43,7 +43,7 @@ export class EnemyShip extends Phaser.Physics.Arcade.Sprite
                 loop: false
             });
 
-            this.scene.hitSound.play({volume: 0.5});
+            this.scene.hitSound.play({volume: 0.3});
             
         }
     }

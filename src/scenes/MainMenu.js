@@ -31,7 +31,7 @@ export class MainMenu extends Phaser.Scene
         this.pressStartText = this.add.bitmapText(256, 400, 'main', 'Start', -24).setOrigin(0.5, 0.5);
         this.pressStartText.setInteractive();
         this.pressStartText.on('pointerdown', () => {
-            this.startGameSound.play({volume: 1});
+            this.startGameSound.play({volume: 0.5});
             this.textFlashTimer.delay = 100;
             this.pressStartText.disableInteractive();
             this.cameras.main.fade(2000, 1, 1, 1);

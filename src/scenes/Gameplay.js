@@ -78,7 +78,7 @@ export class Gameplay extends Phaser.Scene
         });
 
         if(!this.bgm.isPlaying)
-            this.bgm.play({loop: true, volume: 0.5});
+            this.bgm.play({loop: true, volume: 0.3});
         
     }
 
@@ -86,7 +86,7 @@ export class Gameplay extends Phaser.Scene
     {
         this.starsCollected++;
         star.collect();
-        this.pickupSound.play({volume: 0.6})
+        this.pickupSound.play({volume: 0.2})
     }
 
     handleCometCollision(player, comet)
@@ -100,7 +100,7 @@ export class Gameplay extends Phaser.Scene
         explosion.play();
 
         player.destroy();
-        this.explosionSound.play();
+        this.explosionSound.play({volume: 0.4});
         this.bgm.stop();
         this.time.addEvent({
             delay: 2000,
