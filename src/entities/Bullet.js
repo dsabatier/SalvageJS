@@ -1,21 +1,21 @@
-export class Bullet extends Phaser.Physics.Arcade.Sprite
+export class Bullet extends Phaser.GameObjects.Sprite
 {
-    constructor(scene, x, y, image)
+    constructor(scene, x, y, key)
     {
-        super(scene, x, y, image);
+        super(scene, x, y, key);
 
         this.scene = scene;
+        
     }
 
     die()
     {
-        this.scene.bulletGroup.killAndHide(this);
-        this.disableBody();
+        this.disable();
     }
 
     init(position, direction)
     {
-        this.enableBody();
+        this.enable();
         this.x = position.x;
         this.y = position.y;
 
@@ -32,5 +32,26 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite
 
         this.body.setVelocity(direction.x * this.speed, direction.y * this.speed);
         this.anims.play('bullet', true);
+    }
+
+    update(time, delta)
+    {
+        console.log("bullet?");
+    }
+
+    enable()
+    {
+        this.scene.physics.world.enable(this);
+        this.setActive(true)
+        .setVisible(true);
+        this.setPosition(-100, -100);
+    }
+    
+    disable()
+    {
+
+        this.scene.bulletGroup.killAndHide(this);
+        this.scene.physics.world.disable(this);
+        this.setActive(false).setVisible(false);
     }
 }

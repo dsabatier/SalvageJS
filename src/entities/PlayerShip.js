@@ -4,21 +4,11 @@ export class PlayerShip extends Phaser.Physics.Arcade.Sprite
     {
         super(config.scene, config.position.x, config.position.y, config.image);
 
-        this.bulletCooldown = 300;
+        this.bulletCooldown = 270;
         this.lastBulletFiredTime = 0;
 
         this.scene = config.scene;
         this.position = new Phaser.Math.Vector2(config.position.x, config.position.y);
-
-        this.scene.add.existing(this);
-        this.scene.physics.add.existing(this);
-
-        this.body.allowGravity = false;
-        this.body.allowDrag = true;
-        this.body.setDrag(1500, 1500);
-
-        this.body.setSize(12, 12);
-        this.setScale(3);
 
         this.cursorPosition = {};
         this.cursorPosition.x = 0;
@@ -26,6 +16,18 @@ export class PlayerShip extends Phaser.Physics.Arcade.Sprite
 
         this.playerControlsEnabled = false;
         this.anims.play('ship', true);
+    }
+
+    init(){
+        this.scene.add.existing(this);
+        this.scene.physics.world.enableBody(this);
+        this.body.allowGravity = false;
+        this.body.allowDrag = true;
+        this.body.setDrag(1500, 1500);
+
+        this.body.setSize(12, 12);
+        this.setOrigin(0.5, 0.5);
+        this.setScale(3);
     }
 
     spawnBullet()
@@ -44,10 +46,12 @@ export class PlayerShip extends Phaser.Physics.Arcade.Sprite
     {
         this.playerControlsEnabled = enabled;
         this.body.collideWorldBounds = enabled;
+        this.scene.customCursor.setActive(enabled).setVisible(enabled);
     }
 
     playIntroSequence()
     {
+        this.flipX = false;
         this.scene.bg1ScrollSpeed = 0.3;
         this.scene.bg2ScrollSpeed = 0.5;
 
@@ -70,14 +74,44 @@ export class PlayerShip extends Phaser.Physics.Arcade.Sprite
         }, {}, this);
     }
 
+    playExitSequence()
+    {
+        this.flipX = false;
+        this.scene.bg1ScrollSpeed = 0.3;
+        this.scene.bg2ScrollSpeed = 0.35;
+
+        const tween = this.scene.tweens.add({
+            targets: this,
+            ease: 'Quad.easeIn',
+            x: this.scene.cameras.main.width * 1.5,
+            duration: 1200,
+            repeat: 0,
+            yoyo: false
+        });
+
+        const scene = this.scene;
+        tween.setCallback('onComplete', function(){
+            this.scene.time.addEvent({
+                callback: function() {
+                    scene.bgm.stop();
+                    scene.scene.start('MainMenu');
+                },
+                delay: 2000
+            })
+        }, {}, this);
+    }
+
     update(time, delta)
     {
+        
         if(!this.playerControlsEnabled)
             return;
 
         //Phaser.Math.Angle.Between(this.x, this.y, this.scene.input.activePointer.x, this.scene.input.activePointer.y);
-        this.flipX = this.scene.input.activePointer.x < this.x;
-        const speed = 230;
+        this.flipX = this.scene.input.activePointer.x < this.x;       
+        this.body.setOffset(this.flipX ? 0 : 10, 1); 
+
+        const speed = 330;
         const direction = new Phaser.Math.Vector2();
         
         if(this.scene.playerInput.right.isDown)

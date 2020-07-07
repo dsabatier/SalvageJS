@@ -1,4 +1,4 @@
-export class Star extends Phaser.Physics.Arcade.Sprite
+export class Star extends Phaser.GameObjects.Sprite
 {
     constructor(scene, x, y)
     {
@@ -10,19 +10,16 @@ export class Star extends Phaser.Physics.Arcade.Sprite
 
     collect()
     {
-        this.disableBody();
-        this.scene.starGroup.killAndHide(this);
+        this.disable();
     }
 
-    init(x, y)
+    init()
     {
-        if(x || y)
-        {
-            this.x = x;
-            this.y = y;
-        }
-        //this.scene.physics.add.existing(this);
-        this.enableBody(true, x, y, true, true);
+        this.enable();
+        
+        this.setActive(true);
+        this.setVisible(true);
+
         this.body.setSize(16,16,true);
         this.setScale(3);
         this.body.allowGravity = false;
@@ -35,23 +32,14 @@ export class Star extends Phaser.Physics.Arcade.Sprite
         const xRoll = Math.random();
         const yRoll = Math.random();
 
-        if(!x || !y)
-        {
-            this.x = xRoll > 0.5 ? 512 : 0;
-            this.y = yRoll > 0.5 ? 512 : 0;
-        }
 
+        this.x = xRoll > 0.5 ? this.scene.cameras.main.width : 0;
+        this.y = yRoll > 0.5 ? this.scene.cameras.main.width : 0;
+        
         direction.x = xRoll > 0.5 ? -0.3 + (-Math.random() * 0.7) : 0.3 + (Math.random() * 0.7);
         direction.y = yRoll > 0.5 ? -Math.random() : Math.random();
 
-        if(!x || !y)
-        {
-            this.speed = 50 + (Math.random() * 200);
-        }
-        else
-        {
-            this.speed = 10 + (Math.random() * 20);
-        }
+        this.speed = 10 + (Math.random() * 20);
 
         direction.normalize();
         this.body.setVelocity(direction.x * this.speed, direction.y * this.speed);
@@ -59,10 +47,25 @@ export class Star extends Phaser.Physics.Arcade.Sprite
 
     update()
     {
-        if((this.x + this.width) < 0 || this.x > 512 || this.y > 512 || (this.y + this.height < 0))
+        if((this.x + this.width) < 0 || (this.x - this.width) > this.scene.cameras.main.width || (this.y - this.height) > this.scene.cameras.main.height || (this.y + this.height) < 0)
         {
             this.scene.starGroup.killAndHide(this);
+            this.disable();
             return;
         }
+    }
+
+    enable()
+    {
+        this.scene.physics.world.enable(this);
+        this.setActive(true)
+        .setVisible(true);
+    }
+    
+    disable()
+    {
+        this.scene.starGroup.killAndHide(this);
+        this.scene.physics.world.disable(this);
+        this.setActive(false).setVisible(false);
     }
 }

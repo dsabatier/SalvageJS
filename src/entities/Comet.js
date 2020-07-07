@@ -1,5 +1,6 @@
 import { Explosion } from './Explosion';
-export class Comet extends Phaser.Physics.Arcade.Sprite
+import { flash } from '../utils/ImageEffects';
+export class Comet extends Phaser.GameObjects.Sprite
 {
     constructor(scene, x, y, key)
     {
@@ -9,13 +10,15 @@ export class Comet extends Phaser.Physics.Arcade.Sprite
 
         this.speed = 0;
         this.direction = new Phaser.Math.Vector2(0, 0);
-        this.health = 3;
+        this.health = 1;
         this.group = {};
-    }
+        this.spawnsDebris = false;
+        this.spawnsGems = false;
+        this.gemsToSpawn = 0;
+        this.setScale(3);
+        this.setActive(false);
+        this.setVisible(false);
 
-    disableCollider()
-    {
-        this.disableBody();
     }
 
     takeDamage()
@@ -24,123 +27,103 @@ export class Comet extends Phaser.Physics.Arcade.Sprite
 
         if(this.health <= 0)
         {
-            if(this.type === "comet")
+            if(this.spawnsDebris)
             {
+                this.scene.cameras.main.shake(40, new Phaser.Math.Vector2(0.005, 0.005), true);
+                const debrisArray = [];
                 const count = 2 + Math.floor(Math.random() * 2);
                 for(let i = 0; i < count; i++)
                 {
-                    const newDebris = this.scene.debrisGroup.getFirstDead({key: 'comet-small', x: this.x, y: this.y});
-                    newDebris.init(this.x, this.y);
+                    debrisArray.push(this.scene.getDebris(i === 1));
+                    debrisArray[debrisArray.length-1].x = this.x;
+                    debrisArray[debrisArray.length-1].y = this.y;
+                    debrisArray[debrisArray.length-1].init();
+
+                    const velocity = new Phaser.Math.Vector2();
+                    Phaser.Math.RandomXY(velocity, 80);
+
+                    debrisArray[debrisArray.length-1].body.setVelocity(velocity.x, velocity.y);
                 }
             }
-            else
+
+            if(this.spawnsGems > 0)
             {
-                const newStar = this.scene.starGroup.getFirstDead({key: 'star', x: this.x, y: this.y});
-                newStar.init(this.x, this.y);
+                const oreArray = [];
+                const count = this.spawnsGems;
+                for(let i = 0; i < count; i++)
+                {
+                    oreArray.push(this.scene.getOre());
+                    oreArray[oreArray.length-1].x = this.x;
+                    oreArray[oreArray.length-1].y = this.y;
+
+                    this.scene.physics.world.enable(oreArray[oreArray.length-1]);
+                    oreArray[oreArray.length-1].setActive(true).setVisible(true);
+                    oreArray[oreArray.length-1].setFrame(0);
+                    oreArray[oreArray.length-1].setScale(3);
+                    oreArray[oreArray.length-1].body.collideWorldBounds = true;
+                    
+                    const velocity = new Phaser.Math.Vector2();
+                    Phaser.Math.RandomXY(velocity, 20);
+
+                    oreArray[oreArray.length-1].body.setVelocity(velocity.x, velocity.y);
+                }
             }
             
-            this.disableBody();
-
-            const group = this.type === "comet" ? this.scene.cometGroup : this.scene.debrisGroup;
-            group.killAndHide(this);
+            this.disable()
 
             this.scene.explosionSound.play({volume: 0.4});
 
-            if(this.type !== "comet")
-            {
-                const explosion = new Explosion(this.scene, this.x, this.y, 'explosion');
-                explosion.play();
-            }
-            else
-            {
-                const explosion = new Explosion(this.scene, this.x, this.y, 'explosion');
-                explosion.play();
-                explosion.setScale(4);
-            }
+            const explosion = new Explosion(this.scene, this.x, this.y, 'explosion');
+            explosion.play();
+            explosion.setScale(this.scale);
+            
         }
         else
         {
-            this.whiteFilled = true;
-            this.setTintFill(0xffffff);
-
-            this.scene.time.addEvent({
-                delay: 50,
-                callback: () => { this.clearTint()},
-                callbackScope: this,
-                loop: false
-            });
-
+            flash(this);
             this.scene.hitSound.play({volume: 0.5});
         }
     }
 
-    init(x, y)
+    init()
     {
-        if(this.type === "comet")
+        if(this.spawnsGems)
         {
-            this.health = 3;
-            this.enableBody();
-            this.setScale(3);
-            this.body.setCircle(this.height * 0.4, 3, 3);
-            this.body.allowGravity = false;
-            this.body.allowDrag = false;
-            this.body.collideWorldBounds = false;
-            this.body.setBounce(0.5);
-    
-            const direction = new Phaser.Math.Vector2(0, 0);
-    
-            const xRoll = Math.random();
-    
-            if(xRoll > 0.5)
-            {
-                this.x = 512;
-                this.y = 50 + Math.random() * (512-50);
-                direction.x = -1;
-                direction.y = this.y > 256 ? 0.3 + (-Math.random() * 0.4) : 0.3 + Math.random() * 0.4;
-            }
-            else
-            {
-                this.x = 0;
-                this.y = 50 + Math.random() * (512-50);
-                direction.x = 1;
-                direction.y = this.y > 256 ? -Math.random() * 0.4 : 0.3 + Math.random() * 0.4;
-            }
-            
-            this.speed = 20 + (Math.random() * 200);
-            direction.normalize();
-            this.body.setVelocity(direction.x * this.speed, direction.y * this.speed);
+            this.setFrame(1);
         }
-        else
-        {
-            this.enableBody(true, x, y, true, true);
-            this.x = x;
-            this.y = y;
-            this.health = 1;
 
-            this.setScale(3);
-            this.body.setCircle(this.height * 0.4, 3, 3);
-            this.body.allowGravity = false;
-            this.body.allowDrag = false;
-            this.body.collideWorldBounds = false;
-            this.body.setBounce(0.5);
-            const randomX = Math.random() * (2 - -1) + -1;
-            const randomY = Math.random() * (2 - -1) + -1;
-            const direction = new Phaser.Math.Vector2(randomX, randomY);
-            this.speed = 20 + (Math.random() * 120);
-            direction.normalize();
-            this.body.setVelocity(direction.x * this.speed, direction.y * this.speed);
-        }
-        
+        this.enable();
+
     }
 
     update()
     {
-        if((this.x + this.body.width) < 0 || this.body.x > 512 || this.body.y > 512 || (this.y + this.body.height < 0))
+        if((this.x + this.body.width) < 0 || this.x > this.scene.cameras.main.width || this.y > this.scene.cameras.main.height || (this.y + this.body.height < 0))
         {
             const group = this.type === "comet" ? this.scene.cometGroup : this.scene.debrisGroup;
             group.killAndHide(this);
+            this.disable();
             return;
         }
+    }
+
+    enable()
+    {
+        this.scene.physics.world.enable(this);
+        this.setActive(true)
+        .setVisible(true);
+
+        this.body.allowGravity = false;
+        this.body.allowDrag = false;
+        this.body.collideWorldBounds = false;
+    }
+    
+    disable()
+    {
+        const group = this.type === "comet" ? this.scene.cometGroup : this.scene.debrisGroup;
+        group.killAndHide(this);
+        this.scene.physics.world.disable(this);
+        this.setActive(false).setVisible(false);
     }
 
 }
