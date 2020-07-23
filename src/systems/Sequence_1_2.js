@@ -9,9 +9,9 @@ export class Sequence_1_2
     {
         const ship = this.scene.getAsteroid();
         ship.init();
-        ship.y = this.scene.cameras.main.height / 2;
+        ship.y = this.scene.customWorldBounds.height / 2;
 
-        const path = new Phaser.Curves.Path(this.scene.cameras.main.width, this.scene.cameras.main.height / 2);
+        const path = new Phaser.Curves.Path(this.scene.customWorldBounds.width, this.scene.customWorldBounds.height / 2);
         
         for(let i = 0; i < 8; i++)
         {

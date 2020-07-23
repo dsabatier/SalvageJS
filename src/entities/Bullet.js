@@ -28,15 +28,10 @@ export class Bullet extends Phaser.GameObjects.Sprite
         this.setScale(2);
 
         this.direction = new Phaser.Math.Vector2(1, 0);
-        this.speed = 400;
+        this.speed = 600;
 
         this.body.setVelocity(direction.x * this.speed, direction.y * this.speed);
         this.anims.play('bullet', true);
-    }
-
-    update(time, delta)
-    {
-        console.log("bullet?");
     }
 
     enable()

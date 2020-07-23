@@ -15,18 +15,28 @@ export class Comet extends Phaser.GameObjects.Sprite
         this.spawnsDebris = false;
         this.spawnsGems = false;
         this.gemsToSpawn = 0;
-        this.setScale(3);
+        this.invincible = false;
+        this.setScale(2);
         this.setActive(false);
         this.setVisible(false);
 
     }
 
-    takeDamage()
+    takeDamage(damage)
     {
-        this.health--;
+        if(this.invincible)
+        {
+            this.scene.invincibleImpactSound.play({volume: 0.5});
+            return;
+        }
+
+
+        this.health-=damage;
 
         if(this.health <= 0)
         {
+            this.scene.score.pointCount+=100;
+
             if(this.spawnsDebris)
             {
                 this.scene.cameras.main.shake(40, new Phaser.Math.Vector2(0.005, 0.005), true);
@@ -59,7 +69,7 @@ export class Comet extends Phaser.GameObjects.Sprite
                     this.scene.physics.world.enable(oreArray[oreArray.length-1]);
                     oreArray[oreArray.length-1].setActive(true).setVisible(true);
                     oreArray[oreArray.length-1].setFrame(0);
-                    oreArray[oreArray.length-1].setScale(3);
+                    oreArray[oreArray.length-1].setScale(2);
                     oreArray[oreArray.length-1].body.collideWorldBounds = true;
                     
                     const velocity = new Phaser.Math.Vector2();
@@ -69,13 +79,13 @@ export class Comet extends Phaser.GameObjects.Sprite
                 }
             }
             
-            this.disable()
-
             this.scene.explosionSound.play({volume: 0.4});
 
             const explosion = new Explosion(this.scene, this.x, this.y, 'explosion');
             explosion.play();
             explosion.setScale(this.scale);
+
+            this.disable()
             
         }
         else
@@ -96,17 +106,6 @@ export class Comet extends Phaser.GameObjects.Sprite
 
     }
 
-    update()
-    {
-        if((this.x + this.body.width) < 0 || this.x > this.scene.cameras.main.width || this.y > this.scene.cameras.main.height || (this.y + this.body.height < 0))
-        {
-            const group = this.type === "comet" ? this.scene.cometGroup : this.scene.debrisGroup;
-            group.killAndHide(this);
-            this.disable();
-            return;
-        }
-    }
-
     enable()
     {
         this.scene.physics.world.enable(this);
@@ -116,10 +115,12 @@ export class Comet extends Phaser.GameObjects.Sprite
         this.body.allowGravity = false;
         this.body.allowDrag = false;
         this.body.collideWorldBounds = false;
+        this.body.setVelocity(0, 0);
     }
     
     disable()
     {
+        this.x = 1000;
         const group = this.type === "comet" ? this.scene.cometGroup : this.scene.debrisGroup;
         group.killAndHide(this);
         this.scene.physics.world.disable(this);

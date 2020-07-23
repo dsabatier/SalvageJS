@@ -47,7 +47,7 @@ export class EnemyShip extends Phaser.GameObjects.Sprite
     {
         this.enable();
 
-        this.x = this.scene.cameras.main.width;
+        this.x = this.scene.customWorldBounds.width;
 
         this.health = 1;
         this.setSize(16,16,true);

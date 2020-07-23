@@ -7,7 +7,7 @@ export class Explosion extends Phaser.Physics.Arcade.Sprite
 
     play()
     {
-        this.setScale(3);
+        this.setScale(2);
         this.scene.add.existing(this);
         this.anims.play('explosion', true);
     }

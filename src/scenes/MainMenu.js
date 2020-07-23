@@ -1,5 +1,5 @@
 import starBackgroundImage from "../assets/stars-background.png";
-import cursorTexture from '../assets/cursor.png';
+import cursorTexture from '../assets/cursor-Sheet.png';
 
 export class MainMenu extends Phaser.Scene
 {
@@ -15,10 +15,11 @@ export class MainMenu extends Phaser.Scene
 
     preload()
     {
-        this.load.image('cursor', cursorTexture);
+        this.load.spritesheet('cursor', cursorTexture, { frameWidth: 16, frameWidth: 16 });
         this.load.image('starsBackground', starBackgroundImage);
         this.load.bitmapFont('main', require('../assets/font_0.png'), require('../assets/font.xml'));
         this.load.audio('startPressedSound', require('../assets/Pickup_Coin.ogg'));
+        this.load.audio('menu-bgm', require('../assets/intro-bgm-simplified.mp3'));
     }
 
     create()
@@ -38,6 +39,7 @@ export class MainMenu extends Phaser.Scene
         this.pressStartText = this.add.bitmapText(this.cameras.main.width / 2, 400, 'main', 'Click to Start', -24).setOrigin(0.5, 0.5);
         this.pressStartText.setInteractive();
         this.pressStartText.on('pointerdown', () => {
+            this.bgm.stop();
             this.startGameSound.play({volume: 0.1});
             this.textFlashTimer.delay = 100;
             this.pressStartText.disableInteractive();
@@ -57,8 +59,10 @@ export class MainMenu extends Phaser.Scene
         })
 
         this.startGameSound = this.sound.add('startPressedSound');
-        this.customCursor = this.add.image(this.input.activePointer.x, this.input.activePointer.y, 'cursor');
-        this.customCursor.setScale(3);
+        this.customCursor = this.add.image(this.input.activePointer.x, this.input.activePointer.y, 'cursor', 0);
+        this.customCursor.setScale(2);
+        this.bgm = this.sound.add('menu-bgm');
+        this.bgm.play({loop: true, volume: 0.4});
     }
 
     update(time, delta)

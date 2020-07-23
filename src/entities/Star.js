@@ -21,7 +21,7 @@ export class Star extends Phaser.GameObjects.Sprite
         this.setVisible(true);
 
         this.body.setSize(16,16,true);
-        this.setScale(3);
+        this.setScale(2);
         this.body.allowGravity = false;
 
         this.body.allowDrag = false;
@@ -43,16 +43,6 @@ export class Star extends Phaser.GameObjects.Sprite
 
         direction.normalize();
         this.body.setVelocity(direction.x * this.speed, direction.y * this.speed);
-    }
-
-    update()
-    {
-        if((this.x + this.width) < 0 || (this.x - this.width) > this.scene.cameras.main.width || (this.y - this.height) > this.scene.cameras.main.height || (this.y + this.height) < 0)
-        {
-            this.scene.starGroup.killAndHide(this);
-            this.disable();
-            return;
-        }
     }
 
     enable()
