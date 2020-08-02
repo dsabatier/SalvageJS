@@ -23,8 +23,6 @@ export class PlayerShip extends Phaser.Physics.Arcade.Sprite
         this.health = 3;
         this.invincible = false;
         this.equippedWeapon = null;
-        this.switchWeaponKey = this.scene.input.keyboard.addKey('space');
-        this.switchWeaponKey.on('down', this.switchWeapon.bind(this));
 
         this.shootButtonDownLastFrame = false;
     }
@@ -39,17 +37,22 @@ export class PlayerShip extends Phaser.Physics.Arcade.Sprite
         this.body.allowGravity = false;
         this.body.allowDrag = true;
         this.body.setDrag(1500, 1500);
+
+        this.switchWeaponKey = this.scene.input.keyboard.addKey('space');
+        this.switchWeaponKey.on('down', this.switchWeapon.bind(this));
     }
 
-    takeDamage()
+    takeDamage(amount = 1)
     {
         if(this.invincible)
             return;
             
-        this.health--;
+        this.health-=amount;
 
         if(this.health <= 0)
         {
+            this.health = 0;
+            this.switchWeaponKey.removeAllListeners();
             return true;
         }
         else
@@ -133,7 +136,16 @@ export class PlayerShip extends Phaser.Physics.Arcade.Sprite
             this.scene.time.addEvent({
                 callback: function() {
                     scene.bgm.stop();
-                    scene.scene.start('MainMenu');
+                    const nextLevel = scene.currentLevel + 1;
+                    if(nextLevel < scene.levelConfig.data.length)
+                    {
+                        scene.scene.start('Gameplay', { level: nextLevel});
+                    }
+                    else
+                    {
+                        scene.scene.start('MainMenu');
+                    }
+
                 },
                 delay: 2000
             })
@@ -159,26 +171,59 @@ export class PlayerShip extends Phaser.Physics.Arcade.Sprite
             name: 'normal',
             owner: this,
             group: this.scene.bulletGroup,
-            cooldown: 20,
+            cooldown: 600,
             shoot: function()
             {
-                let position = this.owner.body.center;
+                if(!this.owner.body)
+                    return;
                 //const angle = Phaser.Math.Angle.Between(this.owner.x, this.owner.y, this.owner.scene.input.activePointer.x, this.owner.scene.input.activePointer.y);
+
+                const position = this.owner.body.center;
                 const direction = new Phaser.Math.Vector2(1, 0).normalize();
-                position.x += direction.x * 30;
-                position.y += direction.y * 30;
+                position.x += direction.x * 10;
+                position.y += direction.y * 10;
         
-                this.owner.scene.addBullet(position, direction, 1);
+                this.owner.scene.addBullet(position, direction, 3);
                 this.owner.scene.laserSound.play({volume: 0.5, detune: 0});
+                this.owner.scene.cameras.main.shake(100, new Phaser.Math.Vector2(0.005, 0.002), true);
+
+                const muzzleFlash = this.owner.scene.add.sprite(position.x, position.y, 'bullet-muzzle-flash');
+                muzzleFlash.play('bullet-muzzle-flash');
+                muzzleFlash.once('animationcomplete', () => {
+                    muzzleFlash.destroy();
+                });
+                muzzleFlash.setScale(2);
+                muzzleFlash.setDepth(this.owner.depth-1);
             },
             update: function(time, delta)
             {
+                const direction = new Phaser.Math.Vector2(1, 0).normalize();
+
+                const position = this.owner.body.center;
+                position.x += direction.x * 20;
+                position.y += direction.y * 20;
+
+                if(this.muzzleFlash)
+                {
+                    this.muzzleFlash.setPosition(position.x, position.y);
+                }
+
                 if(this.owner.scene.input.activePointer.leftButtonDown())
                 {
-                    if(!this.shootButtonDown && time - this.lastBulletFiredTime > this.cooldown && this.group.countActive() < 3)
+                    if(time - this.lastBulletFiredTime > this.cooldown && this.group.countActive() < 3)
                     {
-                        // add delay here
-                        this.shoot();
+                        this.owner.scene.shortChargeUpSound.play({volume: 0.4});
+                        this.muzzleFlash = this.owner.scene.add.sprite(position.x, position.y, 'charged-bullet-muzzle-flash').play('charged-bullet-muzzle-flash');
+                        this.muzzleFlash.setScale(2);
+                        this.muzzleFlash.setDepth(this.owner.depth+1);
+                        this.muzzleFlash.once('animationcomplete', () => {
+                            this.shoot();
+                            this.owner.lastBulletFiredTime = time;
+
+                            this.muzzleFlash.destroy();
+                            this.muzzleFlash = null;
+                        });
+
                         this.lastBulletFiredTime = time;
                         this.shootButtonDown = true;
                     }
@@ -205,12 +250,12 @@ export class PlayerShip extends Phaser.Physics.Arcade.Sprite
             name: 'minigun',
             owner: this,
             group: this.scene.miniBulletGroup,
-            cooldown: 60,
+            cooldown: 150,
             shoot: function()
             {
                 let position = this.owner.body.center;
                 let angle = Phaser.Math.Angle.Between(this.owner.x, this.owner.y, this.owner.scene.input.activePointer.x, this.owner.scene.input.activePointer.y);
-                angle += Phaser.Math.FloatBetween(-0.25, 0.25);
+                angle += Phaser.Math.FloatBetween(-0.18, 0.18);
                 const direction = new Phaser.Math.Vector2(Math.cos(angle), Math.sin(angle)).normalize();
                 position.x += direction.x * 20;
                 position.y += direction.y * 20;

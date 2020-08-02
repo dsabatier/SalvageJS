@@ -5,12 +5,12 @@ import { Bullet } from "../entities/Bullet";
 import { EnemyShip } from "../entities/EnemyShip";
 import { Explosion } from "../entities/Explosion";
 
-import { Sequence_1 } from "../systems/Sequence_1";
-
 import shipImage from "../assets/ship2-Sheet.png";
+import carImage from "../assets/car-Sheet.png";
 import bulletImage from "../assets/basic_bullet-Sheet.png";
 import explosionImage from "../assets/explosion-Sheet.png";
 import bulletMuzzleFlash from "../assets/bullet-muzzle-flash-Sheet.png";
+import chargedBulletMuzzleFlash from "../assets/charged-bullet-muzzle-flash-Sheet.png";
 import gemCollectFlash from '../assets/gem-collect-Sheet.png';
 import starImage from '../assets/star.png';
 import greenGemImage from '../assets/green-gem.png';
@@ -27,10 +27,14 @@ import hpBarBorderTexture from '../assets/hp-bar-border.png';
 import mouseButtonTexture from '../assets/mouse-button.png';
 import miniBulletTexture from '../assets/mini-bullet-Sheet.png';
 import starBackgroundImage from "../assets/stars-background.png";
+import lavaYellowBackgroundImage from "../assets/lava-yellow.png";
+import lavaOrangeBackgroundImage from "../assets/lava-orange.png";
 import rapidFireIconTexture from '../assets/rapid-fire-icon.png';
 import normalBulletIconTexture from '../assets/normal-bullet-icon.png';
 import absorbIconTexture from '../assets/absorb-icon.png';
+import stalagmiteImage from '../assets/stalagmite-bg.png';
 import { flash } from "../utils/ImageEffects";
+import levelConfig  from "../systems/levelConfig";
 
 
 export class Gameplay extends Phaser.Scene
@@ -39,11 +43,9 @@ export class Gameplay extends Phaser.Scene
     {
         super({ key: "Gameplay" });
         this.bulletGroupCount = 0;
-        this.bg1ScrollSpeed = 0.1;
-        this.bg2ScrollSpeed = 0.15;
         this.updateGroups = [];
         this.cursorShootMode = true;
-        this.customWorldBounds = new Phaser.Geom.Rectangle(0, 0, 768, 512-33);
+        this.customWorldBounds = new Phaser.Geom.Rectangle(0, 0, 768, 512-44);
 
         this.score = {};
         this.inventory = {};
@@ -94,8 +96,7 @@ export class Gameplay extends Phaser.Scene
                     delay: 1000,
                     callback: function()
                     {
-                        const sequence = new Sequence_1(this);
-                        sequence.play();
+                        this.levelConfig.data[this.currentLevel].sequence(this).play();
                     },
                     callbackScope: this,
                     loop: false
@@ -219,10 +220,6 @@ export class Gameplay extends Phaser.Scene
         newBullet.init(position, direction);
         newBullet.setActive(true).setVisible(true);
         newBullet.setDepth(this.playerShip.depth-1);
-
-        const muzzleFlash = this.add.sprite(position.x, position.y, 'bullet-muzzle-flash').play('bullet-muzzle-flash');
-        muzzleFlash.setScale(2);
-        muzzleFlash.setDepth(this.playerShip.depth-1);
     }
 
     addMiniBullet(position, direction, damage)
@@ -379,6 +376,14 @@ export class Gameplay extends Phaser.Scene
         const ore = this.oreGroup.getFirstDead({key: 'ore-small'});
         if(ore)
         {
+            ore.oreGroup = this.oreGroup;
+
+            ore.disable = function()
+            {
+                this.oreGroup.killAndHide(this);
+                this.scene.physics.world.disable(this);
+                this.setActive(false).setVisible(false);
+            }
             return ore;
         }
         else
@@ -393,7 +398,9 @@ export class Gameplay extends Phaser.Scene
     }
 
 
-    init() {
+    init(data) {
+        this.levelConfig = levelConfig;
+        this.currentLevel = data.level;
         this.timer = 0;
         this.playerShip = null;
         this.playerInput = {};
@@ -402,23 +409,33 @@ export class Gameplay extends Phaser.Scene
         this.playerInput.down = this.input.keyboard.addKey('S');
         this.playerInput.left = this.input.keyboard.addKey('A');
         this.playerInput.right = this.input.keyboard.addKey('D');
+
+        console.log("Starting level: " + this.currentLevel);
     }
     
     preload() {
         this.load.spritesheet('ship', shipImage, { frameWidth: 24, frameHeight: 16 });
+        this.load.spritesheet('car', carImage, { frameWidth: 24, frameHeight: 16 });
         this.load.spritesheet('green-charging', greenChargingTexture, { frameWidth: 32, frameHeight: 32 });
-        this.load.image('star', starImage);
-        this.load.image('green-gem', greenGemImage);
-        this.load.image('asteroid-giant', asteroidGiantImage);
+
         this.load.spritesheet('bullet', bulletImage, { frameWidth: 16, frameHeight: 16 });
         this.load.spritesheet('explosion', explosionImage, { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('bullet-muzzle-flash', bulletMuzzleFlash, { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('charged-bullet-muzzle-flash', chargedBulletMuzzleFlash, { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('ore-small', oreSmallImage, { frameWidth: 8, frameHeight: 8});
         this.load.spritesheet('bullet-impact', bulletImpactTexture, { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('asteroid-medium', asteroidMediumTexture, { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('comet-small', cometSmallImage, { frameWidth: 16, frameHeight: 16});
         this.load.spritesheet('gem-collect', gemCollectFlash, { frameWidth: 12, frameHeight: 12});
         this.load.spritesheet('mini-bullet', miniBulletTexture, { frameWidth: 10, frameHeight: 10 });
+
+        this.load.image('starsBackground', starBackgroundImage);
+        this.load.image('lavaYellowBackground', lavaYellowBackgroundImage);
+        this.load.image('lavaOrangeBackground', lavaOrangeBackgroundImage);
+        this.load.image('stalagmiteBackground', stalagmiteImage);
+        this.load.image('star', starImage);
+        this.load.image('green-gem', greenGemImage);
+        this.load.image('asteroid-giant', asteroidGiantImage);
         this.load.image('enemy-ship2', enemy2Texture);
         this.load.image('bottom-ui-bg', bottomUIBGTexture);
         this.load.image('hp-bar-border', hpBarBorderTexture);
@@ -437,8 +454,7 @@ export class Gameplay extends Phaser.Scene
         this.load.audio('absorbingSfx', require('../assets/absorbing-sound.mp3'));
         this.load.audio('invincibleImpactSfx', require('../assets/invincible-impact.mp3'))
         this.load.audio('switchWeaponSfx', require('../assets/switch-weapon.mp3'));
-
-        this.load.image('starsBackground', starBackgroundImage);
+        this.load.audio('shortChargeUpSfx', require('../assets/short-charge-up.mp3'));
 
     }
     
@@ -465,7 +481,16 @@ export class Gameplay extends Phaser.Scene
             key: 'bullet-muzzle-flash',
             frames: this.anims.generateFrameNumbers('bullet-muzzle-flash', { start: 0, end: 4}),
             frameRate: 24,
-            repeat: 0
+            repeat: 0,
+            hideOnComplete: true
+        });
+
+        this.anims.create({ 
+            key: 'charged-bullet-muzzle-flash',
+            frames: this.anims.generateFrameNumbers('charged-bullet-muzzle-flash', { start: 0, end: 6}),
+            frameRate: 24,
+            repeat: 0,
+            hideOnComplete: true
         });
 
         this.anims.create({
@@ -503,14 +528,11 @@ export class Gameplay extends Phaser.Scene
             frameRate: 18,
             repeat: -1
         })
+        
+        this.playerShip = new PlayerShip({scene: this, position:{ x: 150, y: 150 }, image: 'ship'});
+        this.levelConfig.data[this.currentLevel].setup(this);
 
-        this.background1 = this.add.tileSprite(0, 0, this.customWorldBounds.width, this.customWorldBounds.height, 'starsBackground').setOrigin(0, 0);
-        this.background2 = this.add.tileSprite(0, 0, this.customWorldBounds.width*2, this.customWorldBounds.height*2, 'starsBackground').setOrigin(0, 0);
-        this.background2.setScale(1.5);
-        this.background1.setAlpha(0.3);
-        this.background2.setAlpha(0.7);
-
-        this.physics.world.setBounds(this.customWorldBounds.x, this.customWorldBounds.y, this.customWorldBounds.width, 512-66);
+        this.physics.world.setBounds(this.customWorldBounds.x, this.customWorldBounds.y, this.customWorldBounds.width, this.customWorldBounds.height);
         this.bulletGroup = this.add.group(
             {
                 defaultKey: 'bullet',
@@ -582,8 +604,6 @@ export class Gameplay extends Phaser.Scene
             }
         );
 
-        this.playerShip = new PlayerShip({scene: this, position:{ x: 150, y: 150 }, image: 'ship'});
-
         this.giantAsteroid = this.make.sprite({
             key: 'asteroid-giant',
             add: false});
@@ -640,7 +660,7 @@ export class Gameplay extends Phaser.Scene
                 explosion.play();
                 explosion.setScale(5);
 
-                const timer = this.scene.time.addEvent({
+                this.scene.time.addEvent({
                     delay: 333,
                     callback: function(){
                         this.scene.cameras.main.flash(5, 255, 255, 255);
@@ -671,6 +691,7 @@ export class Gameplay extends Phaser.Scene
 
         this.bgm = this.sound.add('bgm');
         this.laserSound = this.sound.add('laserSfx');
+        this.shortChargeUpSound = this.sound.add('shortChargeUpSfx');
         this.hitSound = this.sound.add('hitSfx');
         this.explosionSound = this.sound.add('explosionSfx');
         this.pickupSound = this.sound.add('pickupSfx');
@@ -697,10 +718,15 @@ export class Gameplay extends Phaser.Scene
         this.ui.gemIcon.setDepth(51);
         this.ui.gemIcon.setScale(2);
 
-        this.oreCountText = this.add.bitmapText(this.ui.gemIcon.x + 44, this.ui.gemIcon.y+17, 'main', "1", -24).setOrigin(0, 0.5);
+        this.oreCountText = this.add.bitmapText(this.ui.gemIcon.x + 22, this.ui.gemIcon.y+13, 'main', "1", -14).setOrigin(0, 0.5);
         this.oreCountText.setTintFill(0xffffff);
         this.oreCountText.setScale(2);
         this.oreCountText.setDepth(51);
+
+        this.spaceBarText = this.add.bitmapText(350, this.ui.gemIcon.y, 'main', "Space Bar to Switch", -8).setOrigin(0, 0.5);
+        this.spaceBarText.setTintFill(0xffffff);
+        this.spaceBarText.setScale(2);
+        this.spaceBarText.setDepth(51);
 
         this.pointsCountText = this.add.bitmapText(this.customWorldBounds.width/2, 24, 'main', "1", -24).setOrigin(0.5, 0.5);
         this.pointsCountText.setTintFill(0x588dbe);
@@ -732,10 +758,10 @@ export class Gameplay extends Phaser.Scene
         this.ui.leftMouseButtonIcon.setDepth(51);
         this.ui.leftMouseButtonIcon.setScale(2);
 
-        this.ui.rightMouseButtonIcon = this.add.image(370, 512-24, 'mouse-button');
-        this.ui.rightMouseButtonIcon.setDepth(51);
-        this.ui.rightMouseButtonIcon.setScale(2);
-        this.ui.rightMouseButtonIcon.flipX = true;
+        // this.ui.rightMouseButtonIcon = this.add.image(370, 512-24, 'mouse-button');
+        // this.ui.rightMouseButtonIcon.setDepth(51);
+        // this.ui.rightMouseButtonIcon.setScale(2);
+        // this.ui.rightMouseButtonIcon.flipX = true;
 
         this.ui.normalBulletIcon = this.add.image(250, 512-24, 'normal-bullet-icon');
         this.ui.normalBulletIcon.setDepth(51);
@@ -753,15 +779,16 @@ export class Gameplay extends Phaser.Scene
 
     update(time, delta) {
         if(process.env.NODE_ENV === 'development')
-            this.activeText.setText(`Active Asteroids: ${this.cometGroup.countActive()}\nActive Debris: ${this.debrisGroup.countActive()}\nActive Gems: ${this.starGroup.countActive()}\nActive Ore: ${this.miniBulletGroup.countActive()}`);
+        {
+            this.activeText.setText(`Active Asteroids: ${this.cometGroup.countActive()}\nActive Debris: ${this.debrisGroup.countActive()}\nActive Gems: ${this.starGroup.countActive()}\nActive Ore: ${this.oreGroup.countActive()}`);
+        }
+
         this.ui.hpBarFill.update();
         this.oreCountText.setText(String(this.inventory.oreCount));
         this.pointsCountText.setText(String(this.score.pointCount));
         this.customCursor.x = this.input.activePointer.x;
         this.customCursor.y = this.input.activePointer.y;
         this.customCursor.setDepth(100);
-        this.background1.tilePositionX += delta * this.bg1ScrollSpeed;
-        this.background2.tilePositionX += delta * this.bg1ScrollSpeed;
 
         if(this.playerShip && this.playerShip.active)
             this.playerShip.update(time, delta);
@@ -832,8 +859,7 @@ export class Gameplay extends Phaser.Scene
                 ore.body.setVelocity(direction.x * speed, direction.y * speed);
             }
 
-            
-            //scene.disableIfOutOfBounds(ore);
+            scene.disableIfOutOfBounds(ore, true);
         });
 
         if(this.giantAsteroid.body)
@@ -846,10 +872,7 @@ export class Gameplay extends Phaser.Scene
             this.updateGroups[i].update(time, delta);
         }
 
-        // if(this.input.activePointer.rightButtonReleased())
-        // {
-        //     this.rightButtonIsDown = false;
-        // }
+        this.scrollingBackground.update(time, delta);
     }
 
     disableIfOutOfBounds(go, checkRightSide)

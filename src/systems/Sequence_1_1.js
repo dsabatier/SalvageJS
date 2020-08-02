@@ -127,7 +127,7 @@ export class Sequence_1_1
         this.addAsteroid({x: 1, y: 0.6, vx: -470, vy: 10, delay: 200, invincible: true});
 
 
-        this.addGiantAsteroid({x: 1.3, y: 0.5, vx: -50, vy: 0, delay: 3000});
+        this.addGiantAsteroid({x: 1.3, y: 0.5, vx: -50, vy: 0, delay: 0});
 
         this.scene.time.addEvent({
             callback: function() {

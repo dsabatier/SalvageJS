@@ -1,5 +1,6 @@
 import starBackgroundImage from "../assets/stars-background.png";
 import cursorTexture from '../assets/cursor-Sheet.png';
+import { ScrollingBackground } from "../systems/Background/background";
 
 export class MainMenu extends Phaser.Scene
 {
@@ -26,13 +27,17 @@ export class MainMenu extends Phaser.Scene
     {
         this.input.mouse.disableContextMenu();
         this.sys.canvas.style.cursor = 'none';
-        
-        this.background1 = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'starsBackground').setOrigin(0, 0);
-        this.background2 = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'starsBackground').setOrigin(0, 0);
-        this.background2.setScale(1.5);
-        this.background1.setAlpha(0.3);
-        this.background2.setAlpha(0.7);
 
+        this.scrollingBackground = new ScrollingBackground({
+            tileSprites: [
+                this.add.tileSprite(0, 0,  this.cameras.main.width, this.cameras.main.height, 'starsBackground').setAlpha(0.3).setScale(1).setOrigin(0, 0),
+                this.add.tileSprite(0, 0,  this.cameras.main.width * 2, this.cameras.main.height * 2, 'starsBackground').setOrigin(0, 0).setScale(1.5).setAlpha(0.7)
+            ],
+            scrollSpeed: [
+                0.1, 
+                0.15]
+        });
+        
         this.add.bitmapText(this.cameras.main.width / 2, 300, 'main', 'Salvage', -64).setOrigin(0.5, 0.5);
         this.buttonBorderRenderer = this.add.graphics({ lineStyle: { width: 2, color: 0x666666 }, fillStyle: { color: 0x666666 }});
         this.buttonRect = new Phaser.Geom.Rectangle((this.cameras.main.width / 2)-105, 387.5, 210, 30);
@@ -47,9 +52,14 @@ export class MainMenu extends Phaser.Scene
             this.cameras.main.fade(2000, 1, 1, 1);
 
             this.cameras.main.on('camerafadeoutcomplete', () => {
-                this.scene.start('Gameplay');
+                this.scene.start('Gameplay', { level: 1 });
               }, this);
         });
+
+        this.creditsText = this.add.bitmapText(768/5, 470, 'main', "Art, Programming, Music and Sound by Dominic Sabatier", -8).setOrigin(0, 0.5);
+        this.creditsText.setTintFill(0xffffff);
+        this.creditsText.setScale(2);
+        this.creditsText.setDepth(51);
 
         this.textFlashTimer = this.time.addEvent({
             delay: 600,
@@ -71,7 +81,6 @@ export class MainMenu extends Phaser.Scene
         this.buttonBorderRenderer.strokeRectShape(this.buttonRect);
         this.customCursor.x = this.input.activePointer.x;
         this.customCursor.y = this.input.activePointer.y;
-        this.background1.tilePositionX += delta * 0.1;
-        this.background2.tilePositionX += delta * 0.15;
+        this.scrollingBackground.update(time, delta);
     }
 }
